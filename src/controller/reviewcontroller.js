@@ -83,6 +83,7 @@ exports.deleteReview = async function (req, res) {
 /**************************************Start's  Review Put Api's😍😊****************************************/
 
 exports.UpdateRiew = async function (req, res) {
+    try{
     let bookIdData = req.params.bookId.trim()
 
     let reviewIdData = req.params.reviewId.trim()
@@ -110,7 +111,9 @@ exports.UpdateRiew = async function (req, res) {
     if (!reviewData) { return res.status(404).send({ status: false, message: "Review does not exist" }) }
 
     res.status(200).send({ status: true, BookData: BookData, UpdatedReviewData: reviewData })
-
+} catch (err) {
+    res.status(500).send(err.message)
+}
 }
 
 /**************************************End  Review Put Api's😍😊****************************************/
