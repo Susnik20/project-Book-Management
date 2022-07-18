@@ -155,7 +155,7 @@ exports.getBook = async function (req, res) {
                 }
                 return 0;
             })
-            return res.status(200).send({ status: true, data: sortedBooks })
+            return res.status(200).send({ status: true, message: 'Books list', data: sortedBooks })
 
         } else {
             Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
@@ -186,7 +186,7 @@ exports.getBook = async function (req, res) {
                 }
                 return 0;
             })
-            return res.status(200).send({ status: true, data: sortedBooks })
+            return res.status(200).send({ status: true,message: 'Books list',data: sortedBooks })
 
         }
 
@@ -289,7 +289,7 @@ exports.updateBooks = async function (req, res) {
         }
         // upData.releasedAt = new Date()
         let updated = await bookModel.findOneAndUpdate({ _id: bookId }, upData, { new: true })
-        res.status(200).send({ status: true, Data: updated })
+        res.status(200).send({ status: true,message: 'Success',Data: updated })
 
 
     }
