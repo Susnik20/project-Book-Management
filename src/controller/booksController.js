@@ -3,23 +3,47 @@ const reviewModel = require('../models/reviewModel')
 const userModel = require('../models/userModel')
 const mongoose = require("mongoose")
 const moment = require("moment")
-
+const aws = require('aws-sdk')
 const ObjectId = mongoose.Types.ObjectId
 
 
 
-// const isvalid = function (value) {
-//     if (typeof value === "undefined" || typeof value === null) return false
-//     if (typeof value !== "string" || value.trim().length === 0) return false
-//     return true
-// }
-// const isValidString = function (value) {
-//     if (typeof value === 'string' && value.trim().length === 0) return false
-//     if (!(/^[A-Za-z-._,@&]+$/.test(value))) {
-//         return false
-//     }
-//     return true;
-// }
+
+aws.config.update({
+    accessKeyId: "AKIAY3L35MCRVFM24Q7U",
+    secretAccessKey: "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",
+    region: "ap-south-1"
+})
+
+let uploadFile= async (file) =>{
+   return new Promise( function(resolve, reject) {
+    // this function will upload file to aws and return the link
+    let s3= new aws.S3({apiVersion: '2006-03-01'}); // we will be using the s3 service of aws
+
+    var uploadParams= {
+        ACL: "public-read",
+        Bucket: "classroom-training-bucket",  //HERE
+        Key: "abc/" + file.originalname, //HERE 
+        Body: file.buffer
+    }
+
+
+    s3.upload( uploadParams, function (err, data ){
+        if(err) {
+            return reject({"error": err})
+        }
+        console.log(data)
+        console.log("file uploaded succesfully")
+        return resolve(data.Location)
+    })
+
+    // let data= await s3.upload( uploadParams)
+    // if( data) return data.Location
+    // else return "there is an error"
+
+   })
+}
+
 const isValid = (str) => {
     if (str === undefined || str == null) return false;
     if (typeof str == "string" && str.trim().length == 0) return false;
@@ -89,11 +113,20 @@ exports.createBook = async function (req, res) {
         if (!dateMatch.test(releasedAt)) {
             return res.status(400).send({ status: false, message: "releasedAt is in invalid format" })
         }
-        let bookCreated = await bookModel.create({ title, excerpt, userId, ISBN, category, subcategory, releasedAt })
         if (moment(releasedAt) > moment()) return res.status(400).send({ status: false, message: "releasedAt cannot be in future" })
+        let files= req.files
+        if(files && files.length>0){
+            //upload to s3 and get the uploaded link
+            // res.send the link back to frontend/postman
+            let uploadedFileURL= await uploadFile( files[0] )
+            bookCover = uploadedFileURL
+        }
+        let bookCreated = await bookModel.create({ title, excerpt, userId, ISBN, category, subcategory, releasedAt,bookCover })
+        // if (moment(releasedAt) > moment()) return res.status(400).send({ status: false, message: "releasedAt cannot be in future" })
         let noDate = moment().format(releasedAt, "YYYYMMDD")
         bookCreated = bookCreated.toObject()
         bookCreated.releasedAt = noDate
+        
         res.status(201).send({ status: true, message: 'Success', data: bookCreated })
     } catch (error) {
         res.status(500).send({ status: false, message: error.message })
